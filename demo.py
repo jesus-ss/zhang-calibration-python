@@ -11,6 +11,8 @@ A_final,k1,k2,R_mat_final,t_mat_final=calibrate_camera(x,X)
 img_reproyected_mat=[]
 for i in range(len(x)):
     img=load_image('images\CalibIm'+str(i+1)) 
+    print(img.shape)
+    image_plot(img,x[i])
     Rprueba=R_mat_final[i]
     trasl=t_mat_final[i]
     #reproyect(img,A_final,k1,k2)

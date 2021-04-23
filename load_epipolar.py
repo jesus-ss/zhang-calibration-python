@@ -8,8 +8,8 @@ import cv2
 def load_points():
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     #IMAGENES 1,3,4,6,7,12,13,
-    files1=glob.glob('images\\left01.jpg')
-    files2=glob.glob('images\\right01.jpg')
+    files1=glob.glob('images\\left*.jpg')
+    files2=glob.glob('images\\right*.jpg')
     img_points1=[]
     images1=[]
     images2=[]
@@ -32,7 +32,9 @@ def load_points():
         if ret1 == True and ret2==True:       
             cornersf1 = cv2.cornerSubPix(gray1,corners1,(11,11),(-1,-1),criteria)
             cornersf2 = cv2.cornerSubPix(gray2,corners2,(11,11),(-1,-1),criteria)
+            img1=img1[:,:,0]
             images1.append(img1)
+            img2=img2[:,:,0]
             images2.append(img2)
             # image_plot(img1,np.transpose(np.array(cornersf1[:,0,:])))
             # image_plot(img2,np.transpose(np.array(cornersf2[:,0,:])))

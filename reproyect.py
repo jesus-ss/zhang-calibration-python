@@ -12,6 +12,7 @@ def reproyection_main(img,A_final,k1,k2,Rotation,trasl):
     tadjusted=trasl+np.array([(trasl[0]-xcenter)*t,(trasl[1]-ycenter)*t,trasl[2]*t])    
     Rt=np.concatenate((Rotation[:,0].reshape(3,1),Rotation[:,1].reshape(3,1),tadjusted.reshape(3,1)),axis=1)
     #reproyect(img,A_final,k1,k2)
+    print(img.shape)
     I_rect=reproyect(img,A_final,k1,k2,Rt)
     return I_rect
     
@@ -20,11 +21,11 @@ def image_plot(img,m=[]):
         fig,ax=plt.subplots()
         ax.plot(m[0,:],m[1,:],'b.')
         ax.imshow(img,cmap='gray')
-        plt.show()
+        plt.show(block=False)
     else:
         fig,ax=plt.subplots()
         ax.imshow(img,cmap='gray')
-        plt.show()
+        plt.show(block=False)
          
           
 
@@ -33,7 +34,7 @@ def reproyect(I,A,k1,k2,Rt=np.identity(3)):
     nr=len(I[:,0])
     nc=len(I[0,:])
     I_rect=np.ones((nr,nc))
-    
+    print(I.shape)
     px=ix.reshape(len(ix[:,0])*len(ix[0,:]))
     py=iy.reshape(len(iy[:,0])*len(iy[0,:]))
     pxy=np.vstack((px,py,np.ones(len(ix[:,0])*len(ix[0,:]))))
@@ -112,6 +113,74 @@ def reproyect(I,A,k1,k2,Rt=np.identity(3)):
         I_rect[v,u]=(1-alfax[n])*(1-alfay[n])*I[lu[1,n],lu[0,n]]+(1-alfax[n])*alfay[n]*I[ld[1,n],ld[0,n]]+(1-alfay[n])*alfax[n]*I[ru[1,n],ru[0,n]]+alfax[n]*alfay[n]*I[rd[1,n],rd[0,n]]
      
     return I_rect
+ 
+def reproyect2(I,H):
+    [ix,iy]=np.meshgrid(range(len(I[0,:])),range(len(I[:,0])))    
+    nr=len(I[:,0])
+    nc=len(I[0,:])
+    I_rect=np.ones((nr,nc))
+    
+    px=ix.reshape(len(ix[:,0])*len(ix[0,:]))
+    py=iy.reshape(len(iy[:,0])*len(iy[0,:]))
+    pxy=np.vstack((px,py,np.ones(len(ix[:,0])*len(ix[0,:]))))
+    pxy=np.array(pxy,dtype='int')
+
+
+    pxy2=np.zeros((len(pxy[:,0]),len(pxy[0,:])))
+    l=0
+    
+    for i in np.transpose(pxy):
+        pxy2[:,l]=H.dot(i)
+        l+=1
+    pxy2[0,:]=pxy2[0,:]/pxy2[2,:]
+    pxy2[1,:]=pxy2[1,:]/pxy2[2,:]
+    pxy2[2,:]=pxy2[2,:]/pxy2[2,:]
+    
+
+
+    good_points=[i for i in range(len(pxy2[0,:])) if 
+                 (pxy2[0,i]<(nc-2) and pxy2[0,i]>0 
+                  and pxy2[1,i]>0 and pxy2[1,i]<(nr-2))]
+    
+    print('Numero de pixeles utilizados:  ',len(good_points))
+    pxy2=np.transpose(np.array([pxy2[:,i] for i in good_points]))
+    pxy=np.transpose(np.array([pxy[:,i] for i in good_points]))
+
+    
+
+    #Como el resultado de las transformaciones no sera un numero entero, tengo que 
+    #interpolar las coordenadas del pixel concreto a partir de sus primeros vecinos
+    #lu=arriba-izquierda ru=arriba-derecha
+    #ld=abajo-izquierda  rd=abajo-derecha
+    #alfa=proprcion de pixel mas proximo en cada direccion
+    pxy0=np.floor(pxy2) 
+    pxy0=np.array(pxy0,dtype='int')
+    # alfa=pxy2-pxy0
+    # alfax=alfa[0,:]
+    # alfay=alfa[1,:]
+    
+    # px0=pxy0[0,:]
+    # py0=pxy0[1,:]
+    
+    # ld=np.vstack((px0,py0+1))
+    # rd=np.vstack((px0+1,py0+1))
+    # ru=np.vstack((px0+1,py0))
+    # lu=np.vstack((px0,py0))
+    
+    for n in range(len(pxy[0,:])):
+        u_prima=pxy0[0,n]
+        v_prima=pxy0[1,n]
+        u=pxy[0,n]
+        v=pxy[1,n]
+        I_rect[v_prima,u_prima]=I[v,u]
+        
+        # u=pxy[0,n]
+        # v=pxy[1,n]
+        # I_rect[v,u]=(1-alfax[n])*(1-alfay[n])*I[lu[1,n],lu[0,n]]+(1-alfax[n])*alfay[n]*I[ld[1,n],ld[0,n]]+(1-alfay[n])*alfax[n]*I[ru[1,n],ru[0,n]]+alfax[n]*alfay[n]*I[rd[1,n],rd[0,n]]
+    print('Rectificacion finalizada')
+    return I_rect
+    
+    
     
 def distort(XY,UV,k1,k2,A):
     u_prima=np.zeros(len(XY[0,:]))
